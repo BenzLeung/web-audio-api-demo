@@ -1,5 +1,5 @@
 /**
- * Created by liangweibin on 14-2-10.
+ * Created by BenzLeung on 14-2-10.
  */
 var Sound = function (ctx) {
     if (!ctx) {
