@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>环境音效</title>
+</head>
+<body>
+<h1>环境音效（Convolution）</h1>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<fieldset id="echo_list">
+    <legend>环境</legend>
+    <div><input type="radio" name="echo" id="no_sound" checked /><label for="no_sound">关</label></div>
+</fieldset>
+
+<p>环境音效不是 Web Audio API 内置的，而是使用了 Web Audio API 的<strong>卷积运算(Convolution)</strong>功能。</p>
+<p>声学中，<strong>回声</strong>可以用源声音与一个反映各种反射效应的波形的<strong>卷积</strong>表示。
+    <br/>这些反映反射效应的波形可以反映房间回声、教堂回声、电话声等等，并且可以用WAV格式存储。</p>
+<p>（参考：<a href="http://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF">维基百科——卷积</a>）</p>
+<p>我已经找到了这样的WAV文件。</p>
+<p>WAV来源：<a href="http://chromium.googlecode.com/svn/trunk/samples/audio/convolution-effects.html">http://chromium.googlecode.com/svn/trunk/samples/audio/convolution-effects.html</a></p>
+<script type="text/javascript">
+    var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+    ctx = new Ctx();
+    var convolutionInfo = [
+        {
+            name: '电话',
+            mainGain: 0.0,
+            sendGain: 3.0,
+            url: 'filter-telephone.wav'
+        },
+        {
+            name: '室内',
+            mainGain: 1.0,
+            sendGain: 2.5,
+            url: 'spreader50-65ms.wav'
+        },
+        {
+            name: '山洞',
+            mainGain: 0.0,
+            sendGain: 2.4,
+            url: 'feedback-spring.wav'
+        },
+        {
+            name: '教堂',
+            mainGain: 1.8,
+            sendGain: 0.9,
+            url: 'bin_dfeq/s2_r4_bd.wav'
+        },
+        {
+            name: '厨房',
+            mainGain: 0.6,
+            sendGain: 3.0,
+            url: 'house-impulses/kitchen-true-stereo.wav'
+        },
+        {
+            name: '洗手间',
+            mainGain: 0.6,
+            sendGain: 2.1,
+            url: 'house-impulses/living-bedroom-leveled.wav'
+        }
+
+    ];
+
+    (function () {
+        var sourceNode, sourceGainNode, gainNodes = [], convolutionNodes = [];
+        var loadedCount = 0, loadNum = convolutionInfo.length + 1;
+        var i, temp1, temp2;
+        var IMPULSE_URL_PREFIX = 'impulse/';
+        var RADIO_TPL = '<div><input type="radio" name="echo" id="{%id%}" /><label for="{%id%}">{%name%}</label></div>';
+
+        function loadRes(url, node, callback) {
+            var request = new XMLHttpRequest();
+            request.open('GET', url, true);
+            request.responseType = 'arraybuffer';
+            request.onload = function () {
+                ctx.decodeAudioData(request.response, function (buffer) {
+                    node.buffer = buffer;
+                    if (callback && typeof callback === 'function') {
+                        callback(buffer);
+                    }
+                }, function() {
+                    //decode fail
+                    alert('source not support');
+                });
+            };
+            request.send();
+        }
+
+        function loadMark() {
+            loadedCount ++;
+            document.getElementById('play').value = '加载中...(' + loadedCount + '/' + loadNum + ')';
+            if (loadedCount >= loadNum) {
+                document.getElementById('play').removeAttribute('disabled');
+                document.getElementById('play').value = '播放';
+            }
+        }
+
+
+        // 初始化 source
+        sourceNode = ctx.createBufferSource();
+        sourceGainNode = ctx.createGain();
+        sourceNode.connect(sourceGainNode);
+        sourceGainNode.connect(ctx.destination);
+        loadRes('res/mario.mp3', sourceNode, function(){
+            loadMark();
+            sourceNode.loop = true;
+            sourceNode.loopStart = 2.40;
+            sourceNode.loopEnd = 88.8;
+        });
+
+        // 初始化各种 Convolution;
+        for (i = 0; i < convolutionInfo.length; i ++) {
+            convolutionNodes[i] = ctx.createConvolver();
+            loadRes(IMPULSE_URL_PREFIX + convolutionInfo[i].url, convolutionNodes[i], loadMark);
+            gainNodes[i] = ctx.createGain();
+            gainNodes[i].gain.value = 0.0;
+
+            sourceNode.connect(convolutionNodes[i]);
+            convolutionNodes[i].connect(gainNodes[i]);
+            gainNodes[i].connect(ctx.destination);
+        }
+
+        function setConvolution(index) {
+            sourceGainNode.gain.value = 1.7;
+            for (i = 0; i < gainNodes.length; i ++) {
+                gainNodes[i].gain.value = 0.0;
+            }
+            if (index >= 0) {
+                gainNodes[index].gain.value = convolutionInfo[index].sendGain;
+                sourceGainNode.gain.value = convolutionInfo[index].mainGain;
+            }
+        }
+
+        temp2 = '';
+        for (i = 0; i < convolutionInfo.length; i ++) {
+            temp1 = RADIO_TPL.replace(/\{%id%\}/g, 'echo' + i).replace(/\{%name%\}/g, convolutionInfo[i].name);
+            temp2 += temp1;
+        }
+        document.getElementById('echo_list').innerHTML += temp2;
+
+        for (i = 0; i < convolutionInfo.length; i ++) {
+            document.getElementById('echo' + i).onclick = (function(x){
+                return function () {
+                    setConvolution(x);
+                }
+            })(i);
+        }
+        document.getElementById('no_sound').onclick = function () {
+            setConvolution(-1);
+        };
+
+        document.getElementById('play').onclick = function () {
+            sourceNode.start(0);
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+        };
+
+        setConvolution(-1);
+
+    })();
+</script>
+</body>
+</html>

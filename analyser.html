@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>频谱图</title>
+    <style>
+        div.graph {
+            height: 4px;
+            margin: 1px 0;
+            font-size: 1px;
+            background-color: #4ba9e6;
+        }
+    </style>
+</head>
+<body>
+<h1>频谱图（Analyser）</h1>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<div id="graph">
+
+</div>
+<script type="text/javascript" src="sound.js"></script>
+<script type="text/javascript">
+    var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+    ctx = new Ctx();
+
+    window.requestAnimationFrame = window.requestAnimationFrame
+            || window.webkitRequestAnimationFrame
+            || window.mozRequestAnimationFrame
+            || function (f) {
+        setTimeout(f, 30);
+    };
+
+    (function () {
+        var analyser = ctx.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.4;
+        analyser.connect(ctx.destination);
+        var freqByteData = new Uint8Array(analyser.frequencyBinCount);
+        var i;
+
+        var graphParentDom = document.getElementById('graph');
+        var graphDom;
+        for (i = 0; i < analyser.frequencyBinCount; i ++) {
+            graphDom = document.createElement('div');
+            graphDom.id = 'graph' + i;
+            graphDom.className = 'graph';
+            graphDom.style.width = '1px';
+            graphParentDom.appendChild(graphDom);
+        }
+
+        var renderFFT = function () {
+            var i;
+            analyser.getByteFrequencyData(freqByteData);
+            for (i = 0; i < analyser.frequencyBinCount; i ++) {
+                document.getElementById('graph' + i).style.width = freqByteData[i] + 1 + 'px';
+            }
+            window.requestAnimationFrame(renderFFT);
+        };
+
+
+
+        var loadedCallback = function(){
+            document.getElementById('play').removeAttribute('disabled');
+            document.getElementById('play').value = '播放';
+        };
+        var gangnam = new Sound(ctx);
+        gangnam.setOutput(analyser);
+        //gangnam.load('res/gangnam_style_clip.mp3', loadedCallback);
+        //gangnam.setLoop(5.106, 12.386);
+        //gangnam.load('res/beir_shuang_chip.mp3', loadedCallback);
+        //gangnam.setLoop(1.755, 12.813);
+        gangnam.load('res/mario.mp3', loadedCallback);
+        gangnam.setLoop(2.40, 88.8);
+
+        document.getElementById('play').onclick = function () {
+            gangnam.play();
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+            renderFFT();
+        };
+    })();
+</script>
+</body>
+</html>

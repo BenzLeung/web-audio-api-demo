@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>振荡器测试 - Jingle Bell</title>
+</head>
+<body>
+<h1>振荡器(Oscillator)测试</h1>
+<p>本页面<strong>绝对没有</strong>加载额外的音频资源，不信就捕捉页面的网络请求看~</p>
+<p><input type="button" id="play" value="播放！"/></p>
+<script type="text/javascript">
+    (function () {
+        var HZ = [261.63,293.66,329.63,349.23,392.00,440.00,493.88];
+        var band1 = 'eee eee egcde   fff fee edded g eee eee egcde   fff fee ggfdc   5edc5   5edc6   6fedggggagfdc   ';
+        var band2 = 'c e g e c e g e c f g e d a g b c e g c d e g e c f g e g f d e c e g e c e f d a f b g f d c   ';
+        var band3 = 'c g c g c g ccdef a c g d f d gfc g c g c g ccdef a c g dfg5c567c g c555c g f666f a g b g567c 5 ';
+
+        var SQUARE_DURATION = 0.3;
+        var TRIANGLE_DURATION = 0.28;
+        var NOTE_DURATION = 0.3;
+
+        var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+        var ctx = new Ctx();
+        var compressor = ctx.createDynamicsCompressor();
+        compressor.connect(ctx.destination);
+
+        function playNote(chr, type, octave, startTime) {
+            if (chr === ' ') {
+                return;
+            }
+            var oscillator = ctx.createOscillator();
+            if (chr === 'a') {
+                oscillator.frequency.value = HZ[5] * octave;
+            } else if (chr === 'b') {
+                oscillator.frequency.value = HZ[6] * octave;
+            } else if ('c' <= chr && chr <= 'g') {
+                oscillator.frequency.value = HZ[chr.charCodeAt(0) - 'c'.charCodeAt(0)] * octave;
+            } else if ('1' <= chr && chr <= '7') {
+                oscillator.frequency.value = HZ[chr.charCodeAt(0) - '1'.charCodeAt(0)] * octave / 2;
+            }
+            oscillator.type = type;
+            if (type === 'triangle') {
+                oscillator.start(startTime);
+                oscillator.stop(startTime + TRIANGLE_DURATION);
+                oscillator.connect(compressor);
+            } else if (type === 'square') {
+                oscillator.start(startTime);
+                oscillator.stop(startTime + SQUARE_DURATION);
+                var gainNode = ctx.createGain();
+                gainNode.gain.value = 1.0;
+                gainNode.gain.linearRampToValueAtTime(1.0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.0, startTime + SQUARE_DURATION);
+                oscillator.connect(gainNode);
+                gainNode.connect(compressor);
+            }
+        }
+
+        function playBandString(bandStr, type, octave, startTime) {
+            var i, len;
+            for (i = 0, len = bandStr.length; i < len; i ++) {
+                playNote(bandStr.charAt(i), type, octave, startTime + i * NOTE_DURATION);
+            }
+        }
+
+        document.getElementById('play').onclick = function () {
+            playBandString(band1, 'square', 2, ctx.currentTime + 0.1);
+            playBandString(band2, 'square', 1, ctx.currentTime + 0.1);
+            playBandString(band3, 'triangle', 0.5, ctx.currentTime + 0.1);
+
+            playBandString(band1, 'square', 2, ctx.currentTime + 0.1 + NOTE_DURATION * band1.length);
+            playBandString(band2, 'square', 1, ctx.currentTime + 0.1 + NOTE_DURATION * band2.length);
+            playBandString(band3, 'triangle', 0.5, ctx.currentTime + 0.1 + NOTE_DURATION * band3.length);
+        };
+    })();
+</script>
+</body>
+</html>

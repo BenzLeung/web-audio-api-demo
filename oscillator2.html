@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>振荡器测试（各种波形）</title>
+</head>
+<body>
+<h1>振荡器测试（Oscillator）各种波形</h1>
+<p><strong>按住</strong>按钮以试听音色。</p>
+<p>
+    <input type="button" id="sound_square" name="sound_square" value="方形波(square)"/>
+    <input type="button" id="sound_triangle" name="sound_triangle" value="三角波(triangle)"/>
+    <input type="button" id="sound_sine" name="sound_sine" value="正弦波(sine)"/>
+    <input type="button" id="sound_sawtooth" name="sound_sawtooth" value="锯齿波(sawtooth)"/>
+</p>
+<fieldset>
+    <legend>频率</legend>
+    <div><input type="radio" name="sound" id="sound220hz" /><label for="sound220hz">220 Hz</label></div>
+    <div><input type="radio" name="sound" id="sound440hz" /><label for="sound440hz">440 Hz</label></div>
+    <div><input type="radio" name="sound" id="sound880hz" checked /><label for="sound880hz">880 Hz</label></div>
+    <div><input type="radio" name="sound" id="sound1760hz" /><label for="sound1760hz">1760 Hz</label></div>
+    <div><input type="radio" name="sound" id="sound3520hz" /><label for="sound3520hz">3520 Hz</label></div>
+</fieldset>
+<script type="text/javascript">
+    (function () {
+        var frequency = 880.0;
+        var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+        if (!Ctx) return;
+        var ctx = new Ctx();
+        if (!ctx.createOscillator) return;
+        var dom, oscillator;
+
+        function playSound(type) {
+            if (oscillator) {
+                oscillator.stop(ctx.currentTime);
+            }
+            oscillator = ctx.createOscillator();
+            oscillator.type = type;
+            oscillator.frequency.value = frequency;
+            oscillator.connect(ctx.destination);
+            oscillator.start(ctx.currentTime);
+        }
+
+        dom = document.getElementById('sound_square');
+        dom.onmousedown = dom.ontouchstart = function () {
+            playSound('square');
+        };
+        dom = document.getElementById('sound_triangle');
+        dom.onmousedown = dom.ontouchstart = function () {
+            playSound('triangle');
+        };
+        dom = document.getElementById('sound_sine');
+        dom.onmousedown = dom.ontouchstart = function () {
+            playSound('sine');
+        };
+        dom = document.getElementById('sound_sawtooth');
+        dom.onmousedown = dom.ontouchstart = function () {
+            playSound('sawtooth');
+        };
+        document.onmouseup = document.ontouchend = function () {
+            if (oscillator) {
+                oscillator.stop(ctx.currentTime);
+                oscillator = null;
+            }
+        };
+
+
+        document.getElementById('sound220hz').onclick = function () {
+            frequency = 220.0;
+        };
+        document.getElementById('sound440hz').onclick = function () {
+            frequency = 440.0;
+        };
+        document.getElementById('sound880hz').onclick = function () {
+            frequency = 880.0;
+        };
+        document.getElementById('sound1760hz').onclick = function () {
+            frequency = 1760.0;
+        };
+        document.getElementById('sound3520hz').onclick = function () {
+            frequency = 3520.0;
+        };
+    })();
+</script>
+</body>
+</html>

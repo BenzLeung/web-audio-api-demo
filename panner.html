@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>3D环绕音效</title>
+    <style>
+        #panner {
+            width: 200px;
+            height: 200px;
+            border: 1px solid #888;
+            position: relative;
+            overflow: hidden;
+        }
+        #zero {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            background-color: #088;
+            border-radius: 10px;
+        }
+        #dest {
+            width: 16px;
+            height: 16px;
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            margin: -8px 0 0 -8px;
+            background-color: #800;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<h1>3D环绕音效（Panner）</h1>
+<p>请戴上耳机，并确保左右耳塞没有戴反，然后点“播放”。</p>
+<div id="panner">
+    <div id="zero"></div>
+    <div id="dest"></div>
+</div>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<script type="text/javascript" src="sound.js"></script>
+<script>
+    var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+    var ctx = new Ctx();
+
+    (function () {
+
+        var W = 200, H = 200, R = 60, soundR = 0.5;
+        var x, y, z;
+        var rad = 0;
+
+        var panner = ctx.createPanner();
+        panner.connect(ctx.destination);
+
+        function setXYZ(nx, ny, nz) {
+            x = nx;
+            y = ny;
+            z = nz;
+            panner.setPosition(x * soundR, y * soundR, z * soundR);
+            document.getElementById('dest').style.top = (H / 2 + y * R) + 'px';
+            document.getElementById('dest').style.left = (W / 2 + x * R) + 'px';
+        }
+
+        setInterval(function () {
+            rad += 1;
+            if (rad > 360) {rad -= 360}
+            setXYZ(Math.sin(rad * Math.PI / 180), Math.cos(rad * Math.PI / 180), Math.cos(rad * Math.PI / 180));
+        }, 10);
+
+
+
+        var loadedCallback = function(){
+            document.getElementById('play').removeAttribute('disabled');
+            document.getElementById('play').value = '播放';
+        };
+        var gangnam = new Sound(ctx);
+        gangnam.setOutput(panner);
+        //gangnam.load('res/gangnam_style_clip.mp3', loadedCallback);
+        //gangnam.setLoop(5.106, 12.386);
+        gangnam.load('res/beir_shuang_chip.mp3', loadedCallback);
+        gangnam.setLoop(1.755, 12.813);
+
+        document.getElementById('play').onclick = function () {
+            gangnam.play();
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+        };
+    })();
+</script>
+</body>
+</html>

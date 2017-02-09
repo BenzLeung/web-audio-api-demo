@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>Web Audio API 移动端兼容性测试</title>
+    <style>
+        section.channels {
+            height: 40px;
+        }
+        section.channels label {
+            width: 80px;
+            display: inline-block;
+            height: 25px;
+            line-height: 25px;
+        }
+        section.channels input {
+            width: 200px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<h1>Web Audio API 移动端兼容性测试</h1>
+<p>
+AudioContext: 
+<script type="text/javascript">
+document.write(typeof AudioContext);
+</script>
+</p>
+<p>
+webkitAudioContext: 
+<script type="text/javascript">
+document.write(typeof webkitAudioContext);
+</script>
+</p>
+<!--<p>
+    <input type="button" id="load" value="Load"/>
+</p>
+<p>
+    <input type="button" id="mp3" disabled value="MP3"/>
+    <input type="button" id="aac_he_v1" disabled value="AAC_HE_v1"/>
+    <input type="button" id="aac_he_v2" disabled value="AAC_HE_v2"/>
+    <input type="button" id="aac_lc" disabled value="AAC_LC"/>
+</p>-->
+<div>
+    <section class="channels">
+        <label for="rectangle1">方形波1：</label>
+        <input id="rectangle1" type="range" value="1" step="0.01" max="1" min="0">
+    </section>
+    <section class="channels">
+        <label for="rectangle2">方形波2：</label>
+        <input id="rectangle2" type="range" value="1" step="0.01" max="1" min="0">
+    </section>
+    <section class="channels">
+        <label for="triangle">三角波：</label>
+        <input id="triangle" type="range" value="1" step="0.01" max="1" min="0">
+    </section>
+    <section class="channels">
+        <label for="noise">噪波：</label>
+        <input id="noise" type="range" value="1" step="0.01" max="1" min="0">
+    </section>
+    <p>
+        <input type="button" id="play" disabled value="加载中...0/4"/>
+    </p>
+    <p>
+        <input type="button" id="jump" disabled value="跳！"/>
+        <input type="button" id="gold" disabled value="金币！"/>
+        <input type="button" id="kick" disabled value="踩！"/>
+    </p>
+</div>
+
+<script type="text/javascript">
+    (function () {
+        var EXT_NAME = '.mp3';
+
+        var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+        var ctx = new Ctx();
+        var compressor = ctx.createDynamicsCompressor();
+        compressor.connect(ctx.destination);
+        var destinationNode = compressor;
+
+        var Sound = function () {
+            this.src = null;
+            this.buffer = null;
+            this.isLoaded = false;
+            this.load = function (src, callback) {
+                this.src = src;
+                var request = new XMLHttpRequest();
+                var that = this;
+                request.open('GET', this.src, true);
+                request.responseType = 'arraybuffer';
+                request.onload = function () {
+                    ctx.decodeAudioData(request.response, function (buffer) {
+                        that.buffer = buffer;
+                        that.isLoaded = true;
+                        if (typeof callback === 'function') {
+                            callback(buffer);
+                        }
+                    }, function(){
+                        //decode fail
+                        alert('source not support');
+                    });
+                };
+                request.send();
+            };
+            this.volume = 1;
+            this.loop = false;
+            this.loopStart = 0;
+            this.loopEnd = 0;
+
+            this.volumeNode = null;
+            this.sourceNode = null;
+        };
+
+        Sound.prototype.play = function () {
+            if (this.isLoaded) {
+                var source = ctx.createBufferSource();
+                source.buffer = this.buffer;
+                this.volumeNode = ctx.createGain();
+                this.volumeNode.gain.value = this.volume;
+                source.loopStart = this.loopStart;
+                source.loopEnd = this.loopEnd;
+                source.loop = this.loop;
+                source.connect(this.volumeNode);
+                this.volumeNode.connect(destinationNode);
+                source.start(0);
+                this.sourceNode = source;
+            }
+        };
+
+        Sound.prototype.setVolume = function (volume) {
+            this.volume = volume;
+            if (this.volumeNode) {
+                this.volumeNode.gain.value = volume;
+            }
+        };
+
+        Sound.prototype.setLoop = function (loopStart, loopEnd) {
+            if (loopStart === false) {
+                this.loop = false;
+            } else {
+                this.loop = true;
+                this.loopStart = loopStart;
+                this.loopEnd = loopEnd;
+            }
+            if (this.sourceNode) {
+                this.sourceNode.loopStart = this.loopStart;
+                this.sourceNode.loopEnd = this.loopEnd;
+                this.sourceNode.loop = this.loop;
+            }
+        };
+
+
+
+        (function (){
+            var rectangle1, rectangle2, triangle, noise;
+            var loadedNum = 0;
+            var loadedCallback = function(){
+                loadedNum ++;
+                document.getElementById('play').value = '加载中...' + loadedNum + '/4';
+                if (loadedNum >= 4) {
+                    document.getElementById('play').removeAttribute('disabled');
+                    document.getElementById('play').value = '播放';
+                }
+            };
+            rectangle1 = new Sound();
+            rectangle2 = new Sound();
+            triangle   = new Sound();
+            noise      = new Sound();
+            rectangle1.load('res/rectangle1' + EXT_NAME, loadedCallback);
+            rectangle2.load('res/rectangle2' + EXT_NAME, loadedCallback);
+            triangle  .load('res/triangle' + EXT_NAME, loadedCallback);
+            noise     .load('res/noise' + EXT_NAME, loadedCallback);
+            rectangle1.setLoop(2.40, 88.8);
+            rectangle2.setLoop(2.40, 88.8);
+            triangle  .setLoop(2.40, 88.8);
+            noise     .setLoop(2.40, 88.8);
+            document.getElementById('play').onclick = function () {
+                rectangle1.play();
+                rectangle2.play();
+                triangle  .play();
+                noise     .play();
+                document.getElementById('play').setAttribute('disabled', 'disabled');
+            };
+            document.getElementById('rectangle1').onchange = function () {
+                rectangle1.setVolume(this.value);
+            };
+            document.getElementById('rectangle2').onchange = function () {
+                rectangle2.setVolume(this.value);
+            };
+            document.getElementById('triangle').onchange = function () {
+                triangle.setVolume(this.value);
+            };
+            document.getElementById('noise').onchange = function () {
+                noise.setVolume(this.value);
+            };
+        })();
+
+
+        (function () {
+            var jump, gold, kick;
+            gold = new Sound();
+            gold.load('res/gold.mp3', function () {
+                document.getElementById('gold').removeAttribute('disabled');
+            });
+            document.getElementById('gold').onclick = function () {
+                gold.play();
+            };
+            jump = new Sound();
+            jump.load('res/jump.mp3', function () {
+                document.getElementById('jump').removeAttribute('disabled');
+            });
+            document.getElementById('jump').onclick = function () {
+                jump.play();
+            };
+            kick = new Sound();
+            kick.load('res/kick.mp3', function () {
+                document.getElementById('kick').removeAttribute('disabled');
+            });
+            document.getElementById('kick').onclick = function () {
+                kick.play();
+            };
+        })();
+
+
+
+
+        /*var sound_mp3, sound_aac_he_v2, sound_aac_he_v1, sound_aac_lc;
+        document.getElementById('load').onclick = function () {
+            sound_mp3 = new Sound();
+            sound_mp3.load('res/gold.mp3', function () {
+                document.getElementById('mp3').removeAttribute('disabled');
+            });
+            sound_aac_he_v2 = new Sound();
+            sound_aac_he_v2.load('res/gold_hev2.mp4', function () {
+                document.getElementById('aac_he_v2').removeAttribute('disabled');
+            });
+            sound_aac_he_v1 = new Sound();
+            sound_aac_he_v1.load('res/gold_hev1.mp4', function () {
+                document.getElementById('aac_he_v1').removeAttribute('disabled');
+            });
+            sound_aac_lc = new Sound();
+            sound_aac_lc.load('res/jump_lc.mp4', function () {
+                document.getElementById('aac_lc').removeAttribute('disabled');
+            });
+        };
+        document.getElementById('mp3').onclick = function () {
+            sound_mp3.play();
+        };
+        document.getElementById('aac_he_v2').onclick = function () {
+            sound_aac_he_v2.play();
+        };
+        document.getElementById('aac_he_v1').onclick = function () {
+            sound_aac_he_v1.play();
+        };
+        document.getElementById('aac_lc').onclick = function () {
+            sound_aac_lc.play();
+        };*/
+
+    })();
+</script>
+</body>
+</html>

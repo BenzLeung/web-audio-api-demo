@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>时域图</title>
+</head>
+<body>
+<h1>时域图（Analyser）</h1>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<canvas id="graph" width="256" height="256"></canvas>
+<script type="text/javascript" src="sound.js"></script>
+<script type="text/javascript">
+    var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+    ctx = new Ctx();
+
+    window.requestAnimationFrame = window.requestAnimationFrame
+            || window.webkitRequestAnimationFrame
+            || window.mozRequestAnimationFrame
+            || function (f) {
+        setTimeout(f, 30);
+    };
+
+    (function () {
+        var analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.connect(ctx.destination);
+        var freqByteData = new Uint8Array(analyser.frequencyBinCount);
+
+        var graphDom = document.getElementById('graph');
+        var graphContext = graphDom.getContext('2d');
+        graphContext.fillStyle = '#000';
+        graphContext.strokeStyle = '#7f0';
+        graphContext.lineWidth = 2;
+        graphContext.fillRect(0, 0, graphDom.width, graphDom.height);
+        graphContext.beginPath();
+        graphContext.moveTo(0, graphDom.height / 2);
+        graphContext.lineTo(graphDom.width, graphDom.height / 2);
+        graphContext.stroke();
+        graphContext.closePath();
+
+        var renderFFT = function () {
+            var i;
+            analyser.getByteTimeDomainData(freqByteData);
+            graphContext.fillRect(0, 0, graphDom.width, graphDom.height);
+            graphContext.beginPath();
+            graphContext.moveTo(0, graphDom.height - freqByteData[0]);
+            for (i = 0; i < analyser.frequencyBinCount; i ++) {
+                graphContext.lineTo(i, graphDom.height - freqByteData[i]);
+            }
+            graphContext.stroke();
+            graphContext.closePath();
+            window.requestAnimationFrame(renderFFT);
+        };
+
+
+
+        var loadedCallback = function(){
+            document.getElementById('play').removeAttribute('disabled');
+            document.getElementById('play').value = '播放';
+        };
+        var gangnam = new Sound(ctx);
+        gangnam.setOutput(analyser);
+        //gangnam.load('res/gangnam_style_clip.mp3', loadedCallback);
+        //gangnam.setLoop(5.106, 12.386);
+        gangnam.load('res/beir_shuang_chip.mp3', loadedCallback);
+        gangnam.setLoop(1.755, 12.813);
+        //gangnam.load('res/mario.mp3', loadedCallback);
+        //gangnam.setLoop(2.40, 88.8);
+
+        document.getElementById('play').onclick = function () {
+            gangnam.play();
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+            renderFFT();
+        };
+    })();
+</script>
+</body>
+</html>

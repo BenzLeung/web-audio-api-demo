@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>均衡器（BiquadFilter）</title>
+    <style>
+        .filter label {
+            width: 50px;
+            display: inline-block;
+            height: 25px;
+            line-height: 25px;
+        }
+        .filter input {
+            width: 150px;
+            vertical-align: middle;
+        }
+        .filter em {
+            font-style: normal;
+            color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+<h1>均衡器（BiquadFilter）</h1>
+<div id="eq">
+    <section class="filter">
+        <label for="filter1">32HZ</label>
+        <input id="filter1" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db1">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter2">63HZ</label>
+        <input id="filter2" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db2">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter3">125HZ</label>
+        <input id="filter3" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db3">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter4">250HZ</label>
+        <input id="filter4" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db4">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter5">500HZ</label>
+        <input id="filter5" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db5">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter6">1kHZ</label>
+        <input id="filter6" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db6">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter7">2kHZ</label>
+        <input id="filter7" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db7">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter8">4kHZ</label>
+        <input id="filter8" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db8">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter9">8kHZ</label>
+        <input id="filter9" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db9">0</em>db</span>
+    </section>
+    <section class="filter">
+        <label for="filter10">16kHZ</label>
+        <input id="filter10" type="range" value="0" step="1"
+               max="30" min="-30">
+        <span><em id="db10">0</em>db</span>
+    </section>
+</div>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<script type="text/javascript" src="sound.js"></script>
+<script type="text/javascript">
+    var Ctx = window.webkitAudioContext ? window.webkitAudioContext : window.AudioContext;
+    var ctx = new Ctx();
+
+    (function () {
+        var freqs = [32, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+
+        var biquads = [];
+        var i;
+
+        for (i = 0; i < 10; i ++) {
+            biquads[i] = ctx.createBiquadFilter();
+            biquads[i].type = 5; // 'peaking';
+            biquads[i].frequency.value = freqs[i];
+            biquads[i].Q.value = 1.4;
+            biquads[i].gain.value = 0;
+        }
+
+        for (i = 1; i < 10; i ++) {
+            biquads[i-1].connect(biquads[i]);
+        }
+        biquads[9].connect(ctx.destination);
+
+        for (i = 0; i < 10; i ++) {
+            document.getElementById('filter' + (i+1)).onchange = (function (k){
+                return function () {
+                    biquads[k].gain.value = parseInt(this.value);
+                    document.getElementById('db' + (k+1)).innerHTML = this.value;
+                };
+            })(i);
+        }
+
+
+
+        var loadedCallback = function(){
+            document.getElementById('play').removeAttribute('disabled');
+            document.getElementById('play').value = '播放';
+        };
+        var gangnam = new Sound(ctx);
+        gangnam.setOutput(biquads[0]);
+        //gangnam.load('res/gangnam_style_clip.mp3', loadedCallback);
+        //gangnam.setLoop(5.106, 12.386);
+        gangnam.load('res/beir_shuang_chip.mp3', loadedCallback);
+        gangnam.setLoop(1.755, 12.813);
+
+        document.getElementById('play').onclick = function () {
+            gangnam.play();
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+        };
+    })();
+</script>
+</body>
+</html>

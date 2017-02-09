@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>振荡器测试</title>
+    <style>
+        .musicKey {
+            width: 80%;
+            height: 40px;
+            border: 1px solid #000;
+            background-color: #ccc;
+            font-size: 36px;
+        }
+    </style>
+</head>
+<body>
+<h1>振荡器(Oscillator)测试</h1>
+<p>请按键盘 <strong>"1" - "7"</strong></p>
+<div id="k1" class="musicKey">C</div>
+<div id="k2" class="musicKey">D</div>
+<div id="k3" class="musicKey">E</div>
+<div id="k4" class="musicKey">F</div>
+<div id="k5" class="musicKey">G</div>
+<div id="k6" class="musicKey">A</div>
+<div id="k7" class="musicKey">B</div>
+
+<script type="text/javascript">
+    (function () {
+        var Ctx = webkitAudioContext || AudioContext;
+        var ctx = new Ctx();
+        var compressor = ctx.createDynamicsCompressor();
+        compressor.connect(ctx.destination);
+
+        var OscillatorSound = function (alphabet) {
+            this._musicHertz = {
+                'C' : 261.63,
+                'D' : 293.66,
+                'E' : 329.63,
+                'F' : 349.23,
+                'G' : 392.00,
+                'A' : 440.00,
+                'B' : 493.88
+            };
+            this.alphabet = alphabet || null;
+            this.oscillatorType = 'square';
+        };
+
+        OscillatorSound.prototype.setAlphabet = function (alphabet) {
+            if (this._musicHertz[alphabet] && this.oscillator) {
+                this.oscillator.frequency.value = this._musicHertz[alphabet];
+            }
+        };
+
+        OscillatorSound.prototype.play = function (alphabet/*, octave*/) { // 音名、八度
+            if (!this.oscillator) {
+                this.oscillator = ctx.createOscillator();
+                if (alphabet) {
+                    this.alphabet = alphabet;
+                }
+                this.setAlphabet(this.alphabet);
+                this.oscillator.type = this.oscillatorType;
+                this.oscillator.start(ctx.currentTime);
+                this.oscillator.connect(compressor);
+            }
+        };
+
+        OscillatorSound.prototype.stop = function () {
+            if (this.oscillator) {
+                this.oscillator.stop(ctx.currentTime);
+                this.oscillator = null;
+            }
+        };
+
+        (function () {
+            var sounds = [
+                0,
+                new OscillatorSound('C'),
+                new OscillatorSound('D'),
+                new OscillatorSound('E'),
+                new OscillatorSound('F'),
+                new OscillatorSound('G'),
+                new OscillatorSound('A'),
+                new OscillatorSound('B')
+            ];
+            document.onkeydown = function(e) {
+                var keyCode = e.keyCode;
+                if (49 <= keyCode && keyCode <= 55) {
+                    sounds[keyCode - 48].play();
+                }
+            };
+            document.onkeyup = function (e) {
+                var keyCode = e.keyCode;
+                if (49 <= keyCode && keyCode <= 55) {
+                    sounds[keyCode - 48].stop();
+                }
+            };
+            var touchStart = function (e) {
+                var al = e.target.getAttribute('id').charCodeAt(1);
+                sounds[al - 48].play();
+            };
+            var touchEnd = function (e) {
+                var al = e.target.getAttribute('id').charCodeAt(1);
+                sounds[al - 48].stop();
+            };
+            for (var i = 1; i <= 7; i ++) {
+                document.getElementById('k' + i).ontouchstart = touchStart;
+                document.getElementById('k' + i).ontouchend = touchEnd;
+            }
+
+        })();
+
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <title>无限的《江南Style》</title>
+</head>
+<body>
+<h1>无限的《江南Style》</h1>
+<p>
+    <input type="button" id="play" disabled value="加载中..."/>
+</p>
+<script type="text/javascript" src="sound.js"></script>
+<script>
+    (function () {
+        var loadedCallback = function(){
+            document.getElementById('play').removeAttribute('disabled');
+            document.getElementById('play').value = '播放';
+        };
+        var gangnam = new Sound();
+        gangnam.load('res/gangnam_style_clip.mp3', loadedCallback);
+        gangnam.setLoop(5.106, 12.386);
+
+        document.getElementById('play').onclick = function () {
+            gangnam.play();
+            document.getElementById('play').setAttribute('disabled', 'disabled');
+        };
+    })();
+</script>
+</body>
+</html>
