@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no"/>
     <title>8bit风格噪波生成器</title>
 </head>
 <body>
@@ -57,7 +59,9 @@
             var i;
             var channel = new Float32Array(sampleNum);
             if (freq === 0) {
-                channel.fill(0);
+                for (i = 0; i < sampleNum; i ++) {
+                    channel[i] = 0;
+                }
                 return channel;
             }
             var res = 1;
