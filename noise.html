@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>8bit风格噪波生成器</title>
+</head>
+<body>
+<h1>8bit风格噪波生成器</h1>
+<p>本页面<strong>绝对没有</strong>加载额外的音频资源，不信就捕捉页面的网络请求看~</p>
+<p>
+    <input type="button" id="boom" value="大爆炸"/>
+    <input type="button" id="bullet" value="子弹"/>
+</p>
+<script>
+    (function () {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        var ctx = new AudioContext();
+
+        var sampleRate = 44100;
+
+        var boomNoise = [
+            [880, 7422],
+            [8800, 1354],
+            [440, 1556],
+            [2320, 7210],
+            [3520, 36850],
+            [880, 7410],
+            [2320, 7280],
+            [3520, 36850],
+            [880, 7410],
+            [3520, 13184],
+            [880, 7410],
+            [2320, 7410]
+        ];
+
+        var bulletNoise = [
+            [7260, 713, 1],
+            [880, 764, 1],
+            [880, 764, 1],
+            [5060, 1450, 0.2],
+            [0, 746],
+            [7260, 713, 1],
+            [880, 764, 1],
+            [880, 764, 1],
+            [5060, 1450, 0.2],
+            [0, 746],
+            [3740, 2190, 0.5],
+            [880, 4473, 0.2],
+            [3520, 2153, 0.2],
+            [0, 2200],
+            [4400, 2259, 0.2],
+            [1760, 2316, 0.1],
+            [3520, 2053, 0.1, true]
+        ];
+
+        function genOneNoise(freq, sampleNum, volume, isFadeOut) {
+            var i;
+            var channel = new Float32Array(sampleNum);
+            if (freq === 0) {
+                channel.fill(0);
+                return channel;
+            }
+            var res = 1;
+            var pos = sampleRate / freq;
+            var nextPos = pos;
+            volume = (typeof volume === 'number' ? volume : 1);
+            for (i = 0; i < sampleNum; i ++) {
+                if (i >= nextPos) {
+                    res = Math.ceil(Math.random() * 2) * 2 - 3;
+                    nextPos += pos;
+                }
+                if (isFadeOut) {
+                    channel[i] = res * volume * (1 - i / sampleNum);
+                } else {
+                    channel[i] = res * volume;
+                }
+            }
+            return channel;
+        }
+
+        function genNoiseBuffer(noiseMsg, volume, isFadeOut) {
+            var i, j, p;
+            var sampleNum = 0;
+            for (i = 0; i < noiseMsg.length; i ++) {
+                sampleNum += noiseMsg[i][1];
+            }
+            var oneNoise;
+            var buffer = ctx.createBuffer(1, sampleNum, sampleRate);
+            var noiseSeq = noise.getChannelData(0);
+            volume = (typeof volume === 'number' ? volume : 1);
+            p = 0;
+            for (i = 0; i < noiseMsg.length; i ++) {
+                oneNoise = genOneNoise(noiseMsg[i][0], noiseMsg[i][1], noiseMsg[i][2], noiseMsg[i][3]);
+                for (j = 0; j < oneNoise.length; j ++) {
+                    noiseSeq[p] = oneNoise[j] * volume;
+                    p ++;
+                }
+            }
+            if (isFadeOut) {
+                for (i = 0; i < noiseSeq.length; i ++) {
+                    noiseSeq[i] = noiseSeq[i] * (1 - i / noiseSeq.length);
+                }
+            }
+            return noise;
+        }
+
+
+        document.getElementById('boom').onclick = function () {
+            var source = ctx.createBufferSource();
+            source.buffer = genNoiseBuffer(boomNoise, 1, true);
+            source.connect(ctx.destination);
+            source.start();
+        };
+
+        document.getElementById('bullet').onclick = function () {
+            var source = ctx.createBufferSource();
+            source.buffer = genNoiseBuffer(bulletNoise, 1, false);
+            source.connect(ctx.destination);
+            source.start();
+        };
+
+    })();
+</script>
+</body>
+</html>
