@@ -16,5 +16,6 @@ Demo 列表：
 - [振荡器（oscillator） - 各种波形](https://benzleung.github.io/WebAudioApiDemo/oscillator2.html)
 - [振荡器（oscillator） - 简易电子琴](https://benzleung.github.io/WebAudioApiDemo/oscillator.html)
 - [振荡器（oscillator） - Jingle Bell](https://benzleung.github.io/WebAudioApiDemo/jinglebell.html)
+- [8bit风格噪波生成器](https://benzleung.github.io/WebAudioApiDemo/noise.html)
 
 Web Audio API 还能怎么玩？若有想法请给 Issue，谢谢。
