@@ -22,8 +22,8 @@
     </style>
 </head>
 <body>
-<h1>Web Audio API 移动端兼容性测试</h1>
-<p>
+<h1>Web Audio API 混音测试</h1>
+<!--<p>
 AudioContext: 
 <script type="text/javascript">
 document.write(typeof AudioContext);
@@ -34,7 +34,7 @@ webkitAudioContext:
 <script type="text/javascript">
 document.write(typeof webkitAudioContext);
 </script>
-</p>
+</p>-->
 <!--<p>
     <input type="button" id="load" value="Load"/>
 </p>
@@ -184,16 +184,16 @@ document.write(typeof webkitAudioContext);
                 noise     .play();
                 document.getElementById('play').setAttribute('disabled', 'disabled');
             };
-            document.getElementById('rectangle1').onchange = function () {
+            document.getElementById('rectangle1').oninput = function () {
                 rectangle1.setVolume(this.value);
             };
-            document.getElementById('rectangle2').onchange = function () {
+            document.getElementById('rectangle2').oninput = function () {
                 rectangle2.setVolume(this.value);
             };
-            document.getElementById('triangle').onchange = function () {
+            document.getElementById('triangle').oninput = function () {
                 triangle.setVolume(this.value);
             };
-            document.getElementById('noise').onchange = function () {
+            document.getElementById('noise').oninput = function () {
                 noise.setVolume(this.value);
             };
         })();
